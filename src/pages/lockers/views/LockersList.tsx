@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState } from "react"
-import { db, firebaseApp } from "../../../server/firebase"
-import { Firestore, orderBy, query, where } from "firebase/firestore"
-import firebase from "firebase/compat/app"
-import { collection, doc, setDoc, getDocs } from "firebase/firestore";
+import { db } from "../../../server/firebase"
+import { orderBy, query, where } from "firebase/firestore"
+import { collection, getDocs } from "firebase/firestore";
 import axios from "axios";
-import { Button, Table } from "flowbite-react";
+import { Button, Spinner, Table } from "flowbite-react";
 
 
 export const LockersList = () => {
@@ -23,6 +22,7 @@ export const LockersList = () => {
         querySnapshot.forEach((doc) => {
             const locker = doc.data()
             locker.id = doc.id
+            locker.status = false
             arraylockers.push(locker)
         });
         arraylockers.sort(compararTransmisores)
@@ -38,7 +38,10 @@ export const LockersList = () => {
         return numeroA - numeroB;
     }
 
-    const openLocker = (locker: any) => {
+    const openLocker = (locker: any, index: any) => {
+        const defaultLockers = [...lockers]
+        defaultLockers[index].status = true
+        setLockers(defaultLockers)
         let config = {
             method: 'post',
             maxBodyLength: Infinity,
@@ -51,6 +54,9 @@ export const LockersList = () => {
         axios.request(config)
             .then((response) => {
                 console.log(JSON.stringify(response.data));
+                const defaultLockers = [...lockers]
+                defaultLockers[index].status = false
+                setLockers(defaultLockers)
             })
             .catch((error) => {
                 console.log(error);
@@ -62,22 +68,36 @@ export const LockersList = () => {
             <div className="text-center text-2xl mt-12">Listado de lockers</div>
             <div className="flex justify-center">
                 <div className="mt-8">
-                    <Table className="">
-                        <Table.Head>
-                            <Table.HeadCell>Dispositivo</Table.HeadCell>
-                            <Table.HeadCell></Table.HeadCell>
-                        </Table.Head>
-                        <Table.Body>
-                            {
-                                lockers.map((locker) => (
-                                    <Table.Row key={locker.id}>
-                                        <Table.Cell>{locker.name}</Table.Cell>
-                                        <Table.Cell><Button onClick={() => openLocker(locker)} size="xs">Abrir</Button></Table.Cell>
-                                    </Table.Row>
-                                ))
-                            }
-                        </Table.Body>
-                    </Table>
+                    {
+                        lockers.length > 0 ? (
+                            <Table className="">
+                                <Table.Head>
+                                    <Table.HeadCell>Dispositivo</Table.HeadCell>
+                                    <Table.HeadCell></Table.HeadCell>
+                                    <Table.HeadCell></Table.HeadCell>
+                                </Table.Head>
+                                <Table.Body>
+                                    {
+                                        lockers.map((locker, index) => (
+                                            <Table.Row key={locker.id}>
+                                                <Table.Cell>{locker.name}</Table.Cell>
+                                                <Table.Cell><Button onClick={() => openLocker(locker, index)} size="xs">Abrir</Button></Table.Cell>
+                                                {
+                                                    locker.status && (
+                                                        <Table.Cell><Spinner /></Table.Cell>
+                                                    )
+                                                }
+                                            </Table.Row>
+                                        ))
+                                    }
+
+                                </Table.Body>
+                            </Table>
+                        ) : (
+                            <Spinner />
+                        )
+                    }
+
                 </div>
             </div>
 
