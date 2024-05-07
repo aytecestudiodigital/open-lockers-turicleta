@@ -60,6 +60,9 @@ export const LockersList = () => {
             })
             .catch((error) => {
                 console.log(error);
+                const defaultLockers = [...lockers]
+                defaultLockers[index].status = false
+                setLockers(defaultLockers)
             });
     }
 
