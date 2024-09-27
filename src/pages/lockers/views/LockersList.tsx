@@ -4,20 +4,23 @@ import { db } from "../../../server/firebase"
 import { orderBy, query, where } from "firebase/firestore"
 import { collection, getDocs } from "firebase/firestore";
 import axios from "axios";
-import { Button, Spinner, Table } from "flowbite-react";
+import { Button, Select, Spinner, Table } from "flowbite-react";
 
 
 export const LockersList = () => {
     const [lockers, setLockers] = useState<any[]>([])
+    const [selectedStation, setSelectedStation] = useState("")
 
     useEffect(() => {
-        getData()
-    }, [])
+        if (selectedStation !== "") {
+            getData(selectedStation)
+        }
+    }, [selectedStation])
 
 
-    const getData = async () => {
+    const getData = async (stationId: any) => {
         const arraylockers: any = []
-        const q = query(collection(db, "lockers"), where("type", "==", "magnetika-locker"), orderBy("name", "asc"));
+        const q = query(collection(db, "lockers"), where("type", "==", "magnetika-locker"), where('station_id', '==', stationId), orderBy("name", "asc"));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
             const locker = doc.data()
@@ -68,42 +71,53 @@ export const LockersList = () => {
 
     return (
         <div>
-            <div className="text-center text-2xl mt-12">Listado de lockers</div>
-            <div className="flex justify-center">
-                <div className="mt-8">
-                    {
-                        lockers.length > 0 ? (
-                            <Table className="">
-                                <Table.Head>
-                                    <Table.HeadCell>Dispositivo</Table.HeadCell>
-                                    <Table.HeadCell></Table.HeadCell>
-                                    <Table.HeadCell></Table.HeadCell>
-                                </Table.Head>
-                                <Table.Body>
-                                    {
-                                        lockers.map((locker, index) => (
-                                            <Table.Row key={locker.id}>
-                                                <Table.Cell>{locker.name}</Table.Cell>
-                                                <Table.Cell><Button onClick={() => openLocker(locker, index)} size="xs">Abrir</Button></Table.Cell>
-                                                {
-                                                    locker.status && (
-                                                        <Table.Cell><Spinner /></Table.Cell>
-                                                    )
-                                                }
-                                            </Table.Row>
-                                        ))
-                                    }
-
-                                </Table.Body>
-                            </Table>
-                        ) : (
-                            <Spinner />
-                        )
-                    }
-
-                </div>
+            <div className="flex justify-center mt-4">
+                <Select value={selectedStation} onChange={(e) => setSelectedStation(e.currentTarget.value)}>
+                    <option hidden value="">Selecciona la estación</option>
+                    <option value="CfJqMWL1tmoCC3YwuDhb">Estación Ruidera</option>
+                    <option value="68pWLEA4iy7NkWhGazmE">Estación Miajadas</option>
+                </Select>
             </div>
+            {
+                selectedStation !== "" && (
+                    <>
+                        <div className="text-center text-2xl mt-4">Listado de lockers</div>
+                        <div className="flex justify-center">
+                            <div className="mt-8">
+                                {
+                                    lockers.length > 0 ? (
+                                        <Table className="">
+                                            <Table.Head>
+                                                <Table.HeadCell>Dispositivo</Table.HeadCell>
+                                                <Table.HeadCell></Table.HeadCell>
+                                                <Table.HeadCell></Table.HeadCell>
+                                            </Table.Head>
+                                            <Table.Body>
+                                                {
+                                                    lockers.map((locker, index) => (
+                                                        <Table.Row key={locker.id}>
+                                                            <Table.Cell>{locker.name}</Table.Cell>
+                                                            <Table.Cell><Button onClick={() => openLocker(locker, index)} size="xs">Abrir</Button></Table.Cell>
+                                                            {
+                                                                locker.status && (
+                                                                    <Table.Cell><Spinner /></Table.Cell>
+                                                                )
+                                                            }
+                                                        </Table.Row>
+                                                    ))
+                                                }
 
+                                            </Table.Body>
+                                        </Table>
+                                    ) : (
+                                        <Spinner />
+                                    )
+                                }
+                            </div>
+                        </div>
+                    </>
+                )
+            }
         </div>
 
     )
